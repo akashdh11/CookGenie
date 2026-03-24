@@ -1,0 +1,23 @@
+# Xcode
+DerivedData/
+*.xcuserstate
+*.xccheckout
+xcuserdata/
+
+# Swift Package Manager
+.build/
+
+# CocoaPods
+Pods/
+
+# Firebase / Secrets
+GoogleService-Info.plist
+
+# macOS
+.DS_Store
+*.swp
+
+# Build output
+build/
+*.o
+*.d
