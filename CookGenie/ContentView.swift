@@ -6,16 +6,49 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 struct ContentView: View {
+    @Environment(AuthViewModel.self) private var viewModel
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        ZStack {
+            Color("AppBackground").ignoresSafeArea()
+            
+            Group {
+                if viewModel.currentUser != nil {
+                    MainDashboardView()
+                } else {
+                    LoginView()
+                }
+            }
         }
-        .padding()
+    }
+}
+
+struct MainDashboardView: View {
+    @Environment(AuthViewModel.self) private var viewModel
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image(systemName: "hand.sparkles.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.accentColor)
+                
+                Text("Hello, \(viewModel.userName ?? "User")!")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                
+                AppButton(title: "Sign Out", action: {
+                    viewModel.signOut()
+                }, style: .outline)
+                .padding(.top, 40)
+            }
+            .padding()
+            .navigationTitle("CookGenie")
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }
 
