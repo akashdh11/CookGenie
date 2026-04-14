@@ -48,6 +48,7 @@ struct AppTextField: View {
 struct AppButton: View {
     let title: String
     var icon: ImageResource? = nil
+    var systemIcon: String? = nil
     let action: () -> Void
     var style: Style = .primary
     var isLoading: Bool = false
@@ -67,6 +68,12 @@ struct AppButton: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 32, height: 32)
+                        .font(.headline)
+                } else if let systemIcon = systemIcon {
+                    Image(systemName: systemIcon)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
                         .font(.headline)
                 }
                 
@@ -122,6 +129,186 @@ struct AppButtonStyle: ButtonStyle {
         case .outline: return .accentColor.opacity(0.5)
         default: return .clear
         }
+    }
+}
+
+// MARK: - FlowLayout
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = FlowResult(in: proposal.width ?? 0, subviews: subviews, spacing: spacing)
+        return result.size
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
+        for row in result.rows {
+            for element in row.elements {
+                element.subview.place(at: CGPoint(x: bounds.minX + element.x, y: bounds.minY + element.y), proposal: .unspecified)
+            }
+        }
+    }
+    
+    struct FlowResult {
+        struct Element {
+            let subview: LayoutSubview
+            let x: CGFloat
+            let y: CGFloat
+        }
+        struct Row {
+            var elements: [Element] = []
+            var y: CGFloat = 0
+            var height: CGFloat = 0
+        }
+        var rows: [Row] = []
+        var size: CGSize = .zero
+        
+        init(in maxWidth: CGFloat, subviews: LayoutSubviews, spacing: CGFloat) {
+            var currentX: CGFloat = 0
+            var currentY: CGFloat = 0
+            var currentRow = Row()
+            
+            for subview in subviews {
+                let size = subview.sizeThatFits(.unspecified)
+                if currentX + size.width > maxWidth && !currentRow.elements.isEmpty {
+                    currentRow.y = currentY
+                    rows.append(currentRow)
+                    currentY += currentRow.height + spacing
+                    currentX = 0
+                    currentRow = Row()
+                }
+                
+                currentRow.elements.append(Element(subview: subview, x: currentX, y: currentY))
+                currentRow.height = max(currentRow.height, size.height)
+                currentX += size.width + spacing
+            }
+            
+            if !currentRow.elements.isEmpty {
+                currentRow.y = currentY
+                rows.append(currentRow)
+                currentY += currentRow.height
+            }
+            
+            self.size = CGSize(width: maxWidth, height: currentY)
+        }
+    }
+}
+
+// MARK: - TagView
+struct TagView: View {
+    let title: String
+    var onRemove: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+            
+            Button(action: onRemove) {
+                Image(systemName: "xmark")
+                    .font(.caption2)
+                    .fontWeight(.bold)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color("TagBackground"))
+        .foregroundStyle(Color.orange) // Accent for tags text/icon
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - SectionHeader
+struct SectionHeader: View {
+    let title: String
+    var actionTitle: String? = nil
+    var action: (() -> Void)? = nil
+    
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.title3)
+                .fontWeight(.bold)
+            
+            Spacer()
+            
+            if let actionTitle = actionTitle, let action = action {
+                Button(action: action) {
+                    Text(actionTitle)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.accent)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - SelectionChip
+struct SelectionChip: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(isSelected ? Color("ActiveChipBackground") : Color("TagBackground").opacity(0.5))
+                .foregroundStyle(isSelected ? .black : .primary.opacity(0.8))
+                .cornerRadius(12)
+        }
+        .scaleEffect(isSelected ? 1.05 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+    }
+}
+
+// MARK: - HistoryRow
+struct HistoryRow: View {
+    let title: String
+    let duration: String
+    let ingredients: Int
+    let date: String
+    let icon: String
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 30))
+                .frame(width: 60, height: 60)
+                .background(Color("HistoryItemHighlight"))
+                .cornerRadius(12)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(duration)
+                        .foregroundStyle(.red)
+                    Text("•")
+                    Text("\(ingredients) Ingredients")
+                    Text("•")
+                    Text(date)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fontWeight(.medium)
+                
+                Text(title)
+                    .font(.headline)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+            }
+            
+            Spacer()
+        }
+        .padding(12)
+        .background(Color("CardBackground"))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.02), radius: 5)
     }
 }
 

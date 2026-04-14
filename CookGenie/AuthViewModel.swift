@@ -10,6 +10,7 @@ import SwiftUI
 import FirebaseAuth
 import GoogleSignIn
 import FirebaseCore
+import SwiftData
 
 @MainActor
 @Observable
@@ -60,8 +61,15 @@ final class AuthViewModel {
         isAuthenticating = false
     }
 
-    func signOut() {
+    func signOut(modelContext: ModelContext? = nil, firestoreService: FirestoreService? = nil) {
         do {
+            // Clear local UserPreferences for this user
+            if let context = modelContext, let uid = currentUser?.uid {
+                try? context.delete(model: UserPreferences.self, where: #Predicate { $0.userId == uid })
+            }
+            // Stop Firestore listeners
+            firestoreService?.stopAllListeners()
+
             try Auth.auth().signOut()
             GIDSignIn.sharedInstance.signOut()
             currentUser = nil
