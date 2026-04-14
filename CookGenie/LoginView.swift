@@ -31,7 +31,7 @@ struct LoginView: View {
                     
                     Text("Sign in to continue")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .padding(.top, 60)
                 
@@ -52,7 +52,7 @@ struct LoginView: View {
                         }
                         .font(.footnote)
                         .fontWeight(.medium)
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                     }
                 }
                 
@@ -69,11 +69,11 @@ struct LoginView: View {
                     HStack(spacing: 16) {
                         Rectangle()
                             .frame(height: 1)
-                            .foregroundColor(.secondary)
-                        Text("or").font(.footnote).foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
+                        Text("or").font(.footnote).foregroundStyle(.secondary)
                         Rectangle()
                             .frame(height: 1)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     AppButton(title: "Sign in with Google", icon: .googleIco, action: {
@@ -85,12 +85,12 @@ struct LoginView: View {
                 
                 HStack(spacing: 4) {
                     Text("Don't have an account?")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     Button("Sign Up") {
                         showRegister = true
                     }
                     .fontWeight(.bold)
-                    .foregroundColor(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                 }
                 .font(.subheadline)
                 .padding(.bottom, 20)

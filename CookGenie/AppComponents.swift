@@ -20,7 +20,7 @@ struct AppTextField: View {
             Text(placeholder)
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(.accent)
+                .foregroundStyle(.accent)
                 .padding(.leading, 4)
             
             Group {
@@ -89,7 +89,7 @@ struct AppButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(backgroundColor(for: configuration.isPressed))
-            .foregroundColor(foregroundColor())
+            .foregroundStyle(foregroundStyle())
             .cornerRadius(.cornerRadius)
             .overlay(
                 RoundedRectangle(cornerRadius: .cornerRadius)
@@ -109,7 +109,7 @@ struct AppButtonStyle: ButtonStyle {
         return isPressed ? base.opacity(0.85) : base
     }
     
-    private func foregroundColor() -> Color {
+    private func foregroundStyle() -> Color {
         switch style {
         case .primary: return .white
         case .secondary: return .primary

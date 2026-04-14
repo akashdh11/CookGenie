@@ -34,7 +34,7 @@ struct MainDashboardView: View {
             VStack(spacing: 20) {
                 Image(systemName: "hand.sparkles.fill")
                     .font(.system(size: 60))
-                    .foregroundColor(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                 
                 Text("Hello, \(viewModel.userName ?? "User")!")
                     .font(.largeTitle)

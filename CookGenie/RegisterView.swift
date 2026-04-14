@@ -24,7 +24,7 @@ struct RegisterView: View {
                 
                 Text("Join our culinary community")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .padding(.top, 40)
             
@@ -48,12 +48,12 @@ struct RegisterView: View {
             
             HStack(spacing: 4) {
                 Text("Already have an account?")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 Button("Sign In") {
                     dismiss()
                 }
                 .fontWeight(.bold)
-                .foregroundColor(.accentColor)
+                .foregroundStyle(Color.accentColor)
             }
             .font(.subheadline)
             .padding(.bottom, 20)

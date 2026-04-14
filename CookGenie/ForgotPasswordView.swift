@@ -21,7 +21,7 @@ struct ForgotPasswordView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "key.horizontal.fill")
                         .font(.system(size: 64))
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                     
                     Text("Forgot Password?")
                         .font(.title2)
@@ -29,7 +29,7 @@ struct ForgotPasswordView: View {
                     
                     Text("Enter your email address to receive a password reset link.")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 20)
                 }
@@ -38,14 +38,14 @@ struct ForgotPasswordView: View {
                     VStack(spacing: 20) {
                         Image(systemName: "paperplane.fill")
                             .font(.system(size: 48))
-                            .foregroundColor(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                         
                         Text("Link Sent!")
                             .font(.headline)
                         
                         Text("Check your inbox at \(email)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 40)
                     .frame(maxWidth: .infinity)
@@ -76,7 +76,7 @@ struct ForgotPasswordView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                 }
             }
             .alert("Error", isPresented: .init(get: { viewModel.authError != nil }, set: { _ in viewModel.authError = nil })) {
