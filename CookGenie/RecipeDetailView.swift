@@ -16,6 +16,7 @@ struct RecipeDetailView: View {
     @State private var isFavorite: Bool
     @State private var selectedTab = 1
 
+
     init(recipe: Recipe) {
         self.recipe = recipe
         self._isFavorite = State(initialValue: recipe.isFavorite)
@@ -65,9 +66,7 @@ struct RecipeDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 4) {
-                    Button {
-                        // Share
-                    } label: {
+                    ShareLink(item: shareText) {
                         Image(systemName: "square.and.arrow.up")
                     }
 
@@ -81,6 +80,21 @@ struct RecipeDetailView: View {
             }
         }
         .toolbar(.hidden, for: .tabBar)
+    }
+
+    private var shareText: String {
+        let ingredientList = recipe.ingredients.map { "\($0.quantity) \($0.name)" }.joined(separator: "\n")
+        return """
+        \(recipe.title)
+
+        \(recipe.description)
+
+        Ingredients:
+        \(ingredientList)
+
+        Instructions:
+        \(recipe.instructions.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n"))
+        """
     }
 
     // MARK: - Tabs
