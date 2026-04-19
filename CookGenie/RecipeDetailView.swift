@@ -16,7 +16,6 @@ struct RecipeDetailView: View {
     @State private var isFavorite: Bool
     @State private var selectedTab = 1
 
-
     init(recipe: Recipe) {
         self.recipe = recipe
         self._isFavorite = State(initialValue: recipe.isFavorite)
@@ -53,6 +52,9 @@ struct RecipeDetailView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 14)
             .background(Color(uiColor: .systemBackground))
+            .onAppear {
+                UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(red: 0.98, green: 0.93, blue: 0.80, alpha: 1)
+            }
 
             // Sliding Content
             TabView(selection: $selectedTab) {

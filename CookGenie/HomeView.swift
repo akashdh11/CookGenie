@@ -80,9 +80,10 @@ struct HomeView: View {
         ZStack {
             Color.black.opacity(0.4).ignoresSafeArea()
             VStack(spacing: 20) {
-                ProgressView()
-                    .scaleEffect(1.5)
-                    .tint(.white)
+                Image(systemName: "fork.knife")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.white)
+                    .symbolEffect(.bounce.byLayer, options: .repeating)
                 Text("Conjuring your recipe...")
                     .font(.headline)
                     .foregroundStyle(.white)
