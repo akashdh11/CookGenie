@@ -135,9 +135,18 @@ struct HomeView: View {
                     .background(Color.white.opacity(0.5))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                Text("We'll conjure a recipe from your ingredients")
-                    .font(.subheadline)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Add your ingredients below")
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "slider.horizontal.3")
+                            .font(.caption2)
+                        Text("Tap the top right to set dietary preferences")
+                            .font(.caption)
+                    }
                     .foregroundStyle(.secondary)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
