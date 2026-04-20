@@ -16,8 +16,10 @@ final class UserPreferences {
     var selectedAllergy: String?
     var selectedGoal: String?
     var selectedDishType: String?
+    var generationCount: Int = 0
     
     init(userId: String) {
         self.userId = userId
     }
 }
+

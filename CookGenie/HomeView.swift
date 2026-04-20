@@ -23,6 +23,7 @@ struct HomeView: View {
 
     @Environment(FirestoreService.self) private var firestoreService
     @Environment(AuthViewModel.self) private var authViewModel
+    @Environment(\.modelContext) private var modelContext
 
     // SwiftData for preferences only
     @Query private var userPreferences: [UserPreferences]
@@ -249,6 +250,24 @@ struct HomeView: View {
                 )
                 self.generatedRecipe = recipe
                 self.navigateToDetail = true
+                
+                if let uid = authViewModel.currentUser?.uid {
+                    do {
+                        let descriptor = FetchDescriptor<UserPreferences>(
+                            predicate: #Predicate { $0.userId == uid }
+                        )
+                        if let existing = try modelContext.fetch(descriptor).first {
+                            existing.generationCount += 1
+                        } else {
+                            let prefs = UserPreferences(userId: uid)
+                            prefs.generationCount = 1
+                            modelContext.insert(prefs)
+                        }
+                        try? modelContext.save()
+                    } catch {
+                        // Non-fatal: ignore persistence errors for counter
+                    }
+                }
             } catch {
                 self.generationError = error.localizedDescription
             }

@@ -14,6 +14,12 @@ struct AccountView: View {
     @Environment(AuthViewModel.self) private var viewModel
     @Environment(FirestoreService.self) private var firestoreService
 
+    @Query private var allPreferences: [UserPreferences]
+    private var currentPreferences: UserPreferences? {
+        guard let uid = viewModel.currentUser?.uid else { return nil }
+        return allPreferences.first(where: { $0.userId == uid })
+    }
+
     // Start Firestore listeners when the user is known
     private var uid: String? { viewModel.currentUser?.uid }
 
@@ -36,6 +42,16 @@ struct AccountView: View {
                     }
                     .padding(.vertical, 8)
                 }
+                
+                Section(header: Text("Usage")) {
+                    StatCard(
+                        icon: "fork.knife",
+                        title: "Recipes Generated",
+                        subtitle: "All time",
+                        value: "\(currentPreferences?.generationCount ?? 0)"
+                    )
+                    .padding(.vertical, 4)
+                }
 
                 Section {
                     Button(role: .destructive) {
@@ -54,7 +70,46 @@ struct AccountView: View {
     }
 }
 
+private struct StatCard: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let value: String
+
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundStyle(.accent)
+                .frame(width: 44, height: 44)
+                .background(Color("HistoryItemHighlight"))
+                .cornerRadius(10)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Text(value)
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .monospacedDigit()
+        }
+        .padding(16)
+        .background(Color("CardBackground"))
+        .cornerRadius(16)
+        .shadow(color: .black.opacity(0.02), radius: 5)
+    }
+}
+
 #Preview {
     AccountView()
         .environment(AuthViewModel())
+        .environment(FirestoreService())
+        .modelContainer(for: UserPreferences.self)
 }
