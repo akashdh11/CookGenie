@@ -9,19 +9,27 @@ import SwiftUI
 import FirebaseAuth
 import SwiftData
 
+private extension Notification.Name {
+    static let generationCountDidChange = Notification.Name("generationCountDidChange")
+}
+
 struct AccountView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AuthViewModel.self) private var viewModel
     @Environment(FirestoreService.self) private var firestoreService
 
-    @Query private var allPreferences: [UserPreferences]
-    private var currentPreferences: UserPreferences? {
-        guard let uid = viewModel.currentUser?.uid else { return nil }
-        return allPreferences.first(where: { $0.userId == uid })
-    }
+    @State private var refreshToken = UUID()
 
     // Start Firestore listeners when the user is known
     private var uid: String? { viewModel.currentUser?.uid }
+    
+    private var generationCount: Int {
+        guard let uid = uid else { return 0 }
+        let key = "generationCount.\(uid)"
+        // Access refreshToken to make this computed property reactive
+        _ = refreshToken
+        return UserDefaults.standard.integer(forKey: key)
+    }
 
     var body: some View {
         NavigationStack {
@@ -48,7 +56,7 @@ struct AccountView: View {
                         icon: "fork.knife",
                         title: "Recipes Generated",
                         subtitle: "All time",
-                        value: "\(currentPreferences?.generationCount ?? 0)"
+                        value: "\(generationCount)"
                     )
                     .padding(.vertical, 4)
                 }
@@ -66,6 +74,9 @@ struct AccountView: View {
                 }
             }
             .navigationTitle("Account")
+            .onReceive(NotificationCenter.default.publisher(for: .generationCountDidChange)) { _ in
+                refreshToken = UUID()
+            }
         }
     }
 }
@@ -111,5 +122,4 @@ private struct StatCard: View {
     AccountView()
         .environment(AuthViewModel())
         .environment(FirestoreService())
-        .modelContainer(for: UserPreferences.self)
 }

@@ -9,6 +9,10 @@ import SwiftUI
 import SwiftData
 import FirebaseAuth
 
+private extension Notification.Name {
+    static let generationCountDidChange = Notification.Name("generationCountDidChange")
+}
+
 struct HomeView: View {
     @State private var ingredients = ["Chicken", "Egg", "Onion", "Garlic"]
     @State private var showPreferences = false
@@ -250,27 +254,21 @@ struct HomeView: View {
                 )
                 self.generatedRecipe = recipe
                 self.navigateToDetail = true
-                
-                if let uid = authViewModel.currentUser?.uid {
-                    do {
-                        let descriptor = FetchDescriptor<UserPreferences>(
-                            predicate: #Predicate { $0.userId == uid }
-                        )
-                        if let existing = try modelContext.fetch(descriptor).first {
-                            existing.generationCount += 1
-                        } else {
-                            let prefs = UserPreferences(userId: uid)
-                            prefs.generationCount = 1
-                            modelContext.insert(prefs)
-                        }
-                        try? modelContext.save()
-                    } catch {
-                        // Non-fatal: ignore persistence errors for counter
-                    }
-                }
+                incrementCounter()
             } catch {
                 self.generationError = error.localizedDescription
             }
+        }
+    }
+    
+   private func incrementCounter() {
+        if let uid = authViewModel.currentUser?.uid {
+            let key = "generationCount.\(uid)"
+            let current = UserDefaults.standard.integer(forKey: key)
+            UserDefaults.standard.set(current + 1, forKey: key)
+            
+            // Notify AccountView that the counter changed
+            NotificationCenter.default.post(name: .generationCountDidChange, object: nil)
         }
     }
 }
