@@ -14,9 +14,7 @@ struct FavoritesView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color("HomeBackground").ignoresSafeArea()
-
+            Group {
                 if firestoreService.favoriteRecipes.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "heart.fill")
@@ -49,6 +47,8 @@ struct FavoritesView: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color("HomeBackground").ignoresSafeArea())
             .navigationTitle("Favorites")
             .navigationDestination(for: Recipe.self) { recipe in
                 RecipeDetailView(recipe: recipe)

@@ -10,26 +10,14 @@ import SwiftUI
 import FirebaseAuth
 import SwiftData
 
-private extension Notification.Name {
-    static let generationCountDidChange = Notification.Name("generationCountDidChange")
-}
 
 struct AccountView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AuthViewModel.self) private var viewModel
     @Environment(FirestoreService.self) private var firestoreService
 
-    @State private var refreshToken = UUID()
-
-    // Start Firestore listeners when the user is known
-    private var uid: String? { viewModel.currentUser?.uid }
-    
     private var generationCount: Int {
-        guard let uid = uid else { return 0 }
-        let key = "generationCount.\(uid)"
-        // Access refreshToken to make this computed property reactive
-        _ = refreshToken
-        return UserDefaults.standard.integer(forKey: key)
+        firestoreService.historyRecipes.count
     }
 
     var body: some View {
@@ -40,7 +28,7 @@ struct AccountView: View {
                         Image(systemName: "person.circle.fill")
                             .font(.system(size: 60))
                             .foregroundStyle(.accent)
-
+                        
                         VStack(alignment: .leading, spacing: 4) {
                             Text(viewModel.userName ?? "User")
                                 .font(.headline)
@@ -61,7 +49,7 @@ struct AccountView: View {
                     )
                     .padding(.vertical, 4)
                 }
-
+                
                 Section {
                     Button(role: .destructive) {
                         viewModel.signOut(modelContext: modelContext, firestoreService: firestoreService)
@@ -74,9 +62,13 @@ struct AccountView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Color("HomeBackground").ignoresSafeArea())
             .navigationTitle("Account")
-            .onReceive(NotificationCenter.default.publisher(for: .generationCountDidChange)) { _ in
-                refreshToken = UUID()
+            .onAppear {
+                if let uid = viewModel.currentUser?.uid {
+                    firestoreService.startHistoryListener(uid: uid)
+                }
             }
         }
     }

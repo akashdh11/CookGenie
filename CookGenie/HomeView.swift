@@ -9,9 +9,6 @@ import SwiftUI
 import SwiftData
 import FirebaseAuth
 
-private extension Notification.Name {
-    static let generationCountDidChange = Notification.Name("generationCountDidChange")
-}
 
 //MARK: Home Page where the main recipe generation is done
 struct HomeView: View {
@@ -38,9 +35,6 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color("HomeBackground").ignoresSafeArea()
-
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         headerSection
@@ -50,10 +44,13 @@ struct HomeView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
                 }
-
-                if recipeService.isGenerating {
-                    loadingOverlay
-                }
+                .background(Color("HomeBackground").ignoresSafeArea())
+            .fullScreenCover(isPresented: Binding(
+                get: { recipeService.isGenerating },
+                set: { recipeService.isGenerating = $0 }
+            )) {
+                loadingOverlay
+                    .presentationBackground(.clear)
             }
             .sheet(isPresented: $showPreferences) {
                 RecipePreferencesView()
@@ -218,7 +215,7 @@ struct HomeView: View {
     // MARK: - History Section
     private var historySection: some View {
         VStack(spacing: 16) {
-            SectionHeader(title: "History", actionTitle: "See All") {}
+            SectionHeader(title: "History")
 
             VStack(spacing: 12) {
                 if firestoreService.historyRecipes.isEmpty {
@@ -255,19 +252,9 @@ struct HomeView: View {
                 )
                 self.generatedRecipe = recipe
                 self.navigateToDetail = true
-                incrementCounter()
             } catch {
                 self.generationError = error.localizedDescription
             }
-        }
-    }
-    
-   private func incrementCounter() {
-        if let uid = authViewModel.currentUser?.uid {
-            let key = "generationCount.\(uid)"
-            let current = UserDefaults.standard.integer(forKey: key)
-            UserDefaults.standard.set(current + 1, forKey: key)
-            NotificationCenter.default.post(name: .generationCountDidChange, object: nil)
         }
     }
 }
