@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+// MARK: Reusable components around the app
+
 // MARK: - AppTextField
 struct AppTextField: View {
     let placeholder: String

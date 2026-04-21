@@ -25,7 +25,6 @@ struct CookGenieApp: App {
             ContentView()
                 .environment(authViewModel)
                 .environment(firestoreService)
-                // UserPreferences only — Recipe is now in Firestore
                 .modelContainer(for: UserPreferences.self)
         }
     }
