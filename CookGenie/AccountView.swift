@@ -5,6 +5,7 @@
 //  Created by Akash Hiremath on 4/13/26.
 //
 
+// MARK: View and data structure of how a user's profile is displayed
 import SwiftUI
 import FirebaseAuth
 import SwiftData

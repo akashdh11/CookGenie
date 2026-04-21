@@ -10,6 +10,7 @@ import Foundation
 // Plain Codable struct — Firestore is the source of truth.
 // No SwiftData @Model needed.
 
+// MARK: data structures to store a Recipe and Ingredient info.
 struct RecipeIngredient: Codable, Hashable {
     var name: String
     var quantity: String

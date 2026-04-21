@@ -8,6 +8,7 @@
 import SwiftUI
 import FirebaseAuth
 
+//MARK: Favorited recipes page
 struct FavoritesView: View {
     @Environment(FirestoreService.self) private var firestoreService
     @Environment(AuthViewModel.self) private var authViewModel

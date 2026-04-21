@@ -13,6 +13,7 @@ private extension Notification.Name {
     static let generationCountDidChange = Notification.Name("generationCountDidChange")
 }
 
+//MARK: Home Page where the main recipe generation is done
 struct HomeView: View {
     @State private var ingredients = ["Chicken", "Egg", "Onion", "Garlic"]
     @State private var showPreferences = false
@@ -29,7 +30,7 @@ struct HomeView: View {
     @Environment(AuthViewModel.self) private var authViewModel
     @Environment(\.modelContext) private var modelContext
 
-    // SwiftData for preferences only
+    //MARK: SwiftData for preferences
     @Query private var userPreferences: [UserPreferences]
     private var currentPreferences: UserPreferences? {
         userPreferences.first(where: { $0.userId == authViewModel.currentUser?.uid })
@@ -266,8 +267,6 @@ struct HomeView: View {
             let key = "generationCount.\(uid)"
             let current = UserDefaults.standard.integer(forKey: key)
             UserDefaults.standard.set(current + 1, forKey: key)
-            
-            // Notify AccountView that the counter changed
             NotificationCenter.default.post(name: .generationCountDidChange, object: nil)
         }
     }

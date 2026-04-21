@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 
+//MARK: data structure to store user preferences
 @Model
 final class UserPreferences {
     var userId: String

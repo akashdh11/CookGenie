@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+//MARK: Forgot Password page
 struct ForgotPasswordView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AuthViewModel.self) private var viewModel
