@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+//MARK: Tab view using .tag() to swap between the tabs
 struct MainTabView: View {
     @State private var selectedTab = 0
     

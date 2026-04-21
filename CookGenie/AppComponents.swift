@@ -215,7 +215,7 @@ struct TagView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(Color("TagBackground"))
-        .foregroundStyle(Color.orange) // Accent for tags text/icon
+        .foregroundStyle(Color.orange)
         .cornerRadius(12)
     }
 }

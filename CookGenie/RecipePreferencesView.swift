@@ -16,7 +16,7 @@ struct RecipePreferencesView: View {
     
     @Query private var preferences: [UserPreferences]
     
-    // UI Options
+    // Preference Options
     let timeOptions = ["Under 15 min", "Under 30 min", "Under 60 min"]
     let dietOptions = ["Vegan", "Vegetarian", "Pescatarian", "Keto", "Paleo", "Low-Carb"]
     let allergyOptions = ["Gluten", "Dairy", "Egg", "Soy", "Fish", "Peanut", "Tree Nut", "Shellfish"]
@@ -35,9 +35,7 @@ struct RecipePreferencesView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             header
-            
             ScrollView {
                 VStack(alignment: .leading, spacing: 32) {
                     preferenceSection(title: "Time", options: timeOptions, selected: userPref.selectedTime) { userPref.selectedTime = $0 }
@@ -53,8 +51,6 @@ struct RecipePreferencesView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 24)
             }
-            
-            // Footer
             footer
         }
     }

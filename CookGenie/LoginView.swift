@@ -5,7 +5,10 @@
 //  Created by Akash Hiremath on 3/23/26.
 //
 
+
 import SwiftUI
+
+//MARK: Main Login/Registration Page
 
 struct LoginView: View {
     @Environment(AuthViewModel.self) private var viewModel
