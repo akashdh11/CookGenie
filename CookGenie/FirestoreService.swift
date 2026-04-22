@@ -2,7 +2,7 @@
 //  FirestoreService.swift
 //  CookGenie
 //
-//  Created by Akash Hiremath on 4/13/26.
+//  Created by Akash Hiremath on 3/23/26.
 //
 
 import Foundation
@@ -19,10 +19,8 @@ final class FirestoreService {
     var favoriteRecipes: [Recipe] = []
     var isLoading = false
     var error: String?
-
-    // MARK: - Listeners
-
-    /// Starts a real-time listener for all recipes ordered by creation date.
+    
+    // listener for all recipes ordered by creation date
     func startHistoryListener(uid: String) {
         historyListener?.remove()
         historyListener = db
@@ -40,7 +38,7 @@ final class FirestoreService {
             }
     }
 
-    /// Starts a real-time listener for recipes where isFavorite == true.
+    // listener for recipes where isFavorite == true
     func startFavoritesListener(uid: String) {
         favoritesListener?.remove()
         favoritesListener = db
@@ -59,7 +57,6 @@ final class FirestoreService {
             }
     }
 
-    /// Stops all active Firestore listeners (call on sign out).
     func stopAllListeners() {
         historyListener?.remove()
         favoritesListener?.remove()
@@ -69,9 +66,6 @@ final class FirestoreService {
         favoriteRecipes = []
     }
 
-    // MARK: - Mutations
-
-    /// Toggles the isFavorite flag on a recipe in Firestore.
     func toggleFavorite(uid: String, recipeId: String, isFavorite: Bool) {
         db.collection("users").document(uid)
             .collection("recipes").document(recipeId)

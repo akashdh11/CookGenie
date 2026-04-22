@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-//MARK: Forgot Password page
 struct ForgotPasswordView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AuthViewModel.self) private var viewModel
@@ -51,7 +50,7 @@ struct ForgotPasswordView: View {
                     .padding(.vertical, 40)
                     .frame(maxWidth: .infinity)
                     .background(Color.accentColor.opacity(0.05))
-                    .cornerRadius(.cornerRadius)
+                    .clipShape(RoundedRectangle(cornerRadius: .cornerRadius))
                 } else {
                     VStack(spacing: 24) {
                         AppTextField(placeholder: "Email Address", text: $email, keyboardType: .emailAddress, autocapitalization: .never)

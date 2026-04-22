@@ -7,14 +7,8 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 initializeApp();
 
 const db = getFirestore();
-
-// Firebase CLI manages this secret — no Secret Manager SDK needed
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
-/**
- * generateRecipe — HTTPS Callable
- * Bound to the GEMINI_API_KEY secret via Firebase CLI
- */
 exports.generateRecipe = onCall(
   {
     region: "us-central1",
@@ -22,7 +16,6 @@ exports.generateRecipe = onCall(
     enforceAppCheck: false,
   },
   async (request) => {
-    // 1. Auth check
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Must be signed in to generate a recipe.");
     }
@@ -34,78 +27,101 @@ exports.generateRecipe = onCall(
       throw new HttpsError("invalid-argument", "Please provide at least one ingredient.");
     }
 
-    // 2. Build prompt
+    // Promt Preparation
     const prefLines = [];
-    if (preferences.time) prefLines.push(`- Cooking time: ${preferences.time}`);
-    if (preferences.diet) prefLines.push(`- Diet: ${preferences.diet}`);
-    if (preferences.allergy) prefLines.push(`- Avoid (allergy): ${preferences.allergy}`);
-    if (preferences.goal) prefLines.push(`- Goal: ${preferences.goal}`);
-    if (preferences.dishType) prefLines.push(`- Dish type: ${preferences.dishType}`);
+    if (preferences.time) prefLines.push(`- MAXIMUM COOKING TIME: ${preferences.time} (Strict limit)`);
+    if (preferences.diet) prefLines.push(`- DIETARY RESTRICTION: Must be ${preferences.diet}`);
+    if (preferences.allergy) prefLines.push(`- ALLERGY WARNING: Absolutely NO ${preferences.allergy}`);
+    if (preferences.goal) prefLines.push(`- PRIMARY GOAL: Optimize for ${preferences.goal}`);
+    if (preferences.dishType) prefLines.push(`- MEAL TYPE: This must be a ${preferences.dishType}`);
 
     const preferenceBlock = prefLines.length > 0
-      ? `\n\nUser preferences:\n${prefLines.join("\n")}`
+      ? `\n\n### MANDATORY CONSTRAINTS (DO NOT IGNORE):\n${prefLines.join("\n")}`
       : "";
 
-    const prompt = `You are a professional chef assistant. Generate a recipe using the following ingredients.
+    const prompt = `You are an elite professional chef assistant. 
+Create a world-class recipe based on these specific ingredients: ${ingredients.join(", ")}.
+${preferenceBlock}
 
-Ingredients available: ${ingredients.join(", ")}${preferenceBlock}
+### Requirements:
+1. VALIDATION: Before generating, check if the ingredients are real edible food items. If they are gibberish (e.g., "aaa", "xyz"), non-edible objects, or random characters, do NOT create a recipe. Instead, return ONLY the "error" field in the JSON with a polite explanation.
+2. The recipe MUST strictly follow all the mandatory constraints listed above.
+3. Use ONLY the provided ingredients PLUS common pantry staples (salt, pepper, oil, water).
+4. cookingTime MUST be in the format: "X Min" or "X Hr Y Min".
+5. difficulty MUST be exactly one of: "Easy", "Medium", "Hard".
+6. iconName MUST be chosen ONLY from this whitelist of valid SF Symbols:
+   - Vegetables: "carrot.fill", "leaf.fill", "camera.macro", "mushroom.fill", "tree.fill" (for broccoli)
+   - Fruits: "apple.logo", "strawberry.fill", "orange.fill", "lemon.fill"
+   - Meat/Protein: "fish.fill", "bird.fill" (for chicken/turkey), "egg.fill", "fossil.shell.fill", "meat.fill"
+   - Dairy/Liquid: "drop.fill", "cup.and.saucer.fill", "milk.fill", "bottle.condiment.fill"
+   - Grains/Baking: "circle.grid.3x3.fill", "birthday.cake.fill", "muffin.fill", "croissant.fill", "bread.fill"
+   - Seasoning/Spice: "flame.fill", "sparkles", "atom", "herb"
+   - Meals/Prepared: "pizza.fill", "hamburger.fill", "popcorn.fill", "bowl.fill", "mug.fill", "wineglass.fill"
+   - General: "fork.knife", "takeoutbag.and.cup.and.straw.fill"
+   Use "fork.knife" if no specific match is found.
+7. The response must be a single JSON object.
 
-Respond with ONLY a valid JSON object in this exact format (no markdown, no code blocks, just raw JSON):
+### Response Schema:
 {
-  "title": "Recipe Name",
-  "description": "A short enticing description (2-3 sentences).",
-  "cookingTime": "25 Min",
-  "difficulty": "Easy",
-  "serves": 2,
+  "error": "String (Only if ingredients are invalid/not food. Otherwise omit this field)",
+  "title": "String",
+  "description": "String",
+  "cookingTime": "String",
+  "difficulty": "String",
+  "serves": Number,
   "ingredients": [
-    { "name": "Ingredient Name", "quantity": "Amount + unit", "iconName": "sfSymbolName" }
+    { "name": "String", "quantity": "String", "iconName": "String" }
   ],
   "instructions": [
-    "Step one.",
-    "Step two."
+    "String"
   ]
-}
+}`;
 
-Rules:
-- Use ONLY the provided ingredients plus common pantry staples (salt, pepper, oil, water).
-- iconName must be a valid SF Symbol name (use "circle.fill" as a safe default).
-- cookingTime format: "X Min" or "X Hr Y Min".
-- difficulty must be one of: "Easy", "Medium", "Hard".
-- Return ONLY the JSON. No extra text, no markdown fences.`;
-
-    // 3. Call Gemini — key is injected by Firebase at runtime
+    // Init Gemini with JSON Mode
     const genAI = new GoogleGenerativeAI(geminiApiKey.value());
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite",
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
+    });
 
     let recipeData;
     try {
       const result = await model.generateContent(prompt);
-      const text = result.response.text().trim();
-      const jsonText = text.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
-      recipeData = JSON.parse(jsonText);
+      const text = result.response.text();
+      recipeData = JSON.parse(text);
+
+      if (recipeData.error) {
+        throw new HttpsError("invalid-argument", recipeData.error);
+      }
+
+      console.log(`Successfully generated JSON for recipe: ${recipeData.title}`);
     } catch (err) {
-      console.error("Gemini error:", err);
-      throw new HttpsError("internal", "Failed to generate recipe. Please try again.");
+      console.error("AI Generation Error:", err);
+      if (err instanceof HttpsError) {
+        throw err;
+      }
+      throw new HttpsError("internal", "Our AI chef is currently busy. Please try again in a moment.");
     }
 
-    // 4. Build + save Firestore document
+    // Write to Firestore
     const recipeRef = db.collection("users").doc(uid).collection("recipes").doc();
     const recipeDoc = {
       id: recipeRef.id,
-      title: recipeData.title ?? "Untitled Recipe",
-      description: recipeData.description ?? "",
-      cookingTime: recipeData.cookingTime ?? "20 Min",
-      difficulty: recipeData.difficulty ?? "Easy",
-      serves: recipeData.serves ?? 2,
+      title: recipeData.title || "Untitled Recipe",
+      description: recipeData.description || "",
+      cookingTime: recipeData.cookingTime || "30 Min",
+      difficulty: recipeData.difficulty || "Medium",
+      serves: recipeData.serves || 2,
       isFavorite: false,
-      ingredients: recipeData.ingredients ?? [],
-      instructions: recipeData.instructions ?? [],
+      ingredients: recipeData.ingredients || [],
+      instructions: recipeData.instructions || [],
       createdAt: FieldValue.serverTimestamp(),
       userId: uid,
     };
 
     await recipeRef.set(recipeDoc);
-    console.log(`Recipe "${recipeDoc.title}" saved for user ${uid}`);
 
     return { recipe: recipeDoc };
   }

@@ -2,75 +2,63 @@
 //  HomeView.swift
 //  CookGenie
 //
-//  Created by Akash Hiremath on 4/13/26.
+//  Created by Akash Hiremath on 3/25/26.
 //
 
 import SwiftUI
 import SwiftData
 import FirebaseAuth
 
-
-//MARK: Home Page where the main recipe generation is done
 struct HomeView: View {
-    @State private var ingredients = ["Chicken", "Egg", "Onion", "Garlic"]
+    @State private var ingredients: [String] = []
     @State private var showPreferences = false
     @State private var isAddingIngredient = false
     @State private var newIngredientName = ""
     @FocusState private var isTextFieldFocused: Bool
 
-    @State private var recipeService = RecipeService()
     @State private var generatedRecipe: Recipe?
-    @State private var navigateToDetail = false
     @State private var generationError: String?
 
     @Environment(FirestoreService.self) private var firestoreService
     @Environment(AuthViewModel.self) private var authViewModel
-    @Environment(\.modelContext) private var modelContext
-
-    //MARK: SwiftData for preferences
-    @Query private var userPreferences: [UserPreferences]
-    private var currentPreferences: UserPreferences? {
-        userPreferences.first(where: { $0.userId == authViewModel.currentUser?.uid })
-    }
+    @Environment(RecipeService.self) private var recipeService
+    private var recipePreferences = RecipePreferences.shared
 
     var body: some View {
         NavigationStack {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        headerSection
-                        ingredientSelectorCard
-                        historySection
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 10)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    headerSection
+                    ingredientSelectorCard
+                    historySection
                 }
-                .background(Color("HomeBackground").ignoresSafeArea())
-            .fullScreenCover(isPresented: Binding(
-                get: { recipeService.isGenerating },
-                set: { recipeService.isGenerating = $0 }
-            )) {
-                loadingOverlay
-                    .presentationBackground(.clear)
+                .padding(.horizontal, 20)
+                .padding(.top, 10)
             }
+            .background(Color("HomeBackground").ignoresSafeArea())
             .sheet(isPresented: $showPreferences) {
-                RecipePreferencesView()
-                    .presentationDetents([.large])
-                    .presentationDragIndicator(.visible)
-            }
-            .navigationDestination(isPresented: $navigateToDetail) {
-                if let recipe = generatedRecipe {
-                    RecipeDetailView(recipe: recipe)
+                NavigationStack{
+                    RecipePreferencesView()
+                        .presentationDetents([.large])
+                        .navigationTitle("Recipe Preferences")
+                        .navigationBarTitleDisplayMode(.inline)
                 }
+            }
+            .navigationDestination(item: $generatedRecipe) { recipe in
+                RecipeDetailView(recipe: recipe)
             }
             .navigationDestination(for: Recipe.self) { recipe in
                 RecipeDetailView(recipe: recipe)
             }
-            .alert("Generation Failed", isPresented: .constant(generationError != nil)) {
+            .alert("Generation Failed", isPresented: Binding(
+                get: { generationError != nil },
+                set: { if !$0 { generationError = nil } }
+            )) {
                 Button("OK") { generationError = nil }
             } message: {
-                Text(generationError ?? "")
+                Text(generationError ?? "An unknown error occurred while conjuring your recipe.")
             }
-            .onAppear {
+            .task {
                 if let uid = authViewModel.currentUser?.uid {
                     firestoreService.startHistoryListener(uid: uid)
                 }
@@ -78,26 +66,8 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Loading Overlay
-    private var loadingOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.4).ignoresSafeArea()
-            VStack(spacing: 20) {
-                Image(systemName: "fork.knife")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.white)
-                    .symbolEffect(.bounce.byLayer, options: .repeating)
-                Text("Conjuring your recipe...")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-            }
-            .padding(40)
-            .background(.ultraThinMaterial)
-            .cornerRadius(24)
-        }
-    }
 
-    // MARK: - Header
+    // MARK: Header
     private var headerSection: some View {
         HStack(alignment: .top) {
             Text("Not sure what to\ncook tonight?")
@@ -128,7 +98,7 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Ingredient Card
+    // MARK: Ingredient Card
     private var ingredientSelectorCard: some View {
         VStack(spacing: 16) {
             HStack(spacing: 12) {
@@ -167,7 +137,7 @@ struct HomeView: View {
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
                             .background(Color("TagBackground").opacity(0.5))
-                            .cornerRadius(12)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                             .focused($isTextFieldFocused)
                             .frame(width: 120)
                             .onSubmit {
@@ -192,7 +162,7 @@ struct HomeView: View {
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
                                 .background(Color("CardBackground").opacity(0.3))
-                                .cornerRadius(12)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
                 }
@@ -200,7 +170,7 @@ struct HomeView: View {
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color("CardBackground"))
-            .cornerRadius(16)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
 
             AppButton(title: "Generate Recipe", systemIcon: "sparkles", action: {
                 generateAction()
@@ -209,13 +179,18 @@ struct HomeView: View {
         }
         .padding(16)
         .background(Color("IngredientCardBackground"))
-        .cornerRadius(24)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
     }
 
-    // MARK: - History Section
+    // MARK: History Section
     private var historySection: some View {
         VStack(spacing: 16) {
-            SectionHeader(title: "History")
+            HStack {
+                Text("History")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                Spacer()
+            }
 
             VStack(spacing: 12) {
                 if firestoreService.historyRecipes.isEmpty {
@@ -227,7 +202,7 @@ struct HomeView: View {
                 } else {
                     ForEach(firestoreService.historyRecipes) { recipe in
                         NavigationLink(value: recipe) {
-                            HistoryRow(
+                            RecipeRow(
                                 title: recipe.title,
                                 duration: recipe.cookingTime,
                                 ingredients: recipe.ingredients.count,
@@ -242,18 +217,18 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Generation
+    // MARK: Generate Button
     private func generateAction() {
         Task {
             do {
                 let recipe = try await recipeService.generateRecipe(
                     ingredients: ingredients,
-                    preferences: currentPreferences
+                    preferences: recipePreferences
                 )
                 self.generatedRecipe = recipe
-                self.navigateToDetail = true
             } catch {
-                self.generationError = error.localizedDescription
+                let nsError = error as NSError
+                self.generationError = nsError.localizedDescription
             }
         }
     }

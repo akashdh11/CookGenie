@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-// MARK: View for registering a new account
 struct RegisterView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AuthViewModel.self) private var viewModel

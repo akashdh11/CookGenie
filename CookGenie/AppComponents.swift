@@ -7,9 +7,7 @@
 
 import SwiftUI
 
-// MARK: Reusable components around the app
-
-// MARK: - AppTextField
+// MARK: AppTextField
 struct AppTextField: View {
     let placeholder: String
     @Binding var text: String
@@ -37,7 +35,7 @@ struct AppTextField: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
-            .cornerRadius(.cornerRadius)
+            .clipShape(RoundedRectangle(cornerRadius: .cornerRadius))
             .overlay(
                 RoundedRectangle(cornerRadius: .cornerRadius)
                     .stroke(Color.accentColor)
@@ -46,7 +44,7 @@ struct AppTextField: View {
     }
 }
 
-// MARK: - AppButton
+// MARK: AppButton
 struct AppButton: View {
     let title: String
     var icon: ImageResource? = nil
@@ -91,7 +89,7 @@ struct AppButton: View {
     }
 }
 
-// MARK: - Button Styles
+// MARK: Button Styles
 struct AppButtonStyle: ButtonStyle {
     let style: AppButton.Style
     
@@ -99,7 +97,7 @@ struct AppButtonStyle: ButtonStyle {
         configuration.label
             .background(backgroundColor(for: configuration.isPressed))
             .foregroundStyle(foregroundStyle())
-            .cornerRadius(.cornerRadius)
+            .clipShape(RoundedRectangle(cornerRadius: .cornerRadius))
             .overlay(
                 RoundedRectangle(cornerRadius: .cornerRadius)
                     .stroke(borderColor(), lineWidth: style == .outline ? 1.5 : 0)
@@ -134,70 +132,60 @@ struct AppButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - FlowLayout
+// MARK: FlowLayout
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
     
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = FlowResult(in: proposal.width ?? 0, subviews: subviews, spacing: spacing)
-        return result.size
+        let rows = computeRows(proposal: proposal, subviews: subviews)
+        let width = proposal.width ?? 0
+        let height = rows.last?.maxY ?? 0
+        return CGSize(width: width, height: height)
     }
     
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
-        for row in result.rows {
+        let rows = computeRows(proposal: proposal, subviews: subviews)
+        for row in rows {
             for element in row.elements {
-                element.subview.place(at: CGPoint(x: bounds.minX + element.x, y: bounds.minY + element.y), proposal: .unspecified)
+                let x = bounds.minX + element.x
+                let y = bounds.minY + row.y
+                element.subview.place(at: CGPoint(x: x, y: y), proposal: .unspecified)
             }
         }
     }
     
-    struct FlowResult {
-        struct Element {
-            let subview: LayoutSubview
-            let x: CGFloat
-            let y: CGFloat
-        }
-        struct Row {
-            var elements: [Element] = []
-            var y: CGFloat = 0
-            var height: CGFloat = 0
-        }
-        var rows: [Row] = []
-        var size: CGSize = .zero
+    private struct Row {
+        var elements: [(subview: LayoutSubview, x: CGFloat)] = []
+        var y: CGFloat = 0
+        var height: CGFloat = 0
+        var maxY: CGFloat { y + height }
+    }
+    
+    private func computeRows(proposal: ProposedViewSize, subviews: Subviews) -> [Row] {
+        let maxWidth = proposal.width ?? 0
+        var rows: [Row] = [Row()]
+        var currentX: CGFloat = 0
         
-        init(in maxWidth: CGFloat, subviews: LayoutSubviews, spacing: CGFloat) {
-            var currentX: CGFloat = 0
-            var currentY: CGFloat = 0
-            var currentRow = Row()
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
             
-            for subview in subviews {
-                let size = subview.sizeThatFits(.unspecified)
-                if currentX + size.width > maxWidth && !currentRow.elements.isEmpty {
-                    currentRow.y = currentY
-                    rows.append(currentRow)
-                    currentY += currentRow.height + spacing
-                    currentX = 0
-                    currentRow = Row()
-                }
-                
-                currentRow.elements.append(Element(subview: subview, x: currentX, y: currentY))
-                currentRow.height = max(currentRow.height, size.height)
-                currentX += size.width + spacing
+            if currentX + size.width > maxWidth && !rows.last!.elements.isEmpty {
+                var newRow = Row()
+                newRow.y = rows.last!.maxY + spacing
+                rows.append(newRow)
+                currentX = 0
             }
             
-            if !currentRow.elements.isEmpty {
-                currentRow.y = currentY
-                rows.append(currentRow)
-                currentY += currentRow.height
-            }
-            
-            self.size = CGSize(width: maxWidth, height: currentY)
+            let rowIndex = rows.count - 1
+            rows[rowIndex].elements.append((subview, currentX))
+            rows[rowIndex].height = max(rows[rowIndex].height, size.height)
+            currentX += size.width + spacing
         }
+        return rows
     }
 }
 
-// MARK: - TagView
+// MARK: TagView
 struct TagView: View {
     let title: String
     var onRemove: () -> Void
@@ -218,37 +206,12 @@ struct TagView: View {
         .padding(.vertical, 8)
         .background(Color("TagBackground"))
         .foregroundStyle(Color.orange)
-        .cornerRadius(12)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
-// MARK: - SectionHeader
-struct SectionHeader: View {
-    let title: String
-    var actionTitle: String? = nil
-    var action: (() -> Void)? = nil
-    
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.title3)
-                .fontWeight(.bold)
-            
-            Spacer()
-            
-            if let actionTitle = actionTitle, let action = action {
-                Button(action: action) {
-                    Text(actionTitle)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(.accent)
-                }
-            }
-        }
-    }
-}
 
-// MARK: - SelectionChip
+// MARK: SelectionChip
 struct SelectionChip: View {
     let title: String
     let isSelected: Bool
@@ -263,15 +226,15 @@ struct SelectionChip: View {
                 .padding(.vertical, 10)
                 .background(isSelected ? Color("ActiveChipBackground") : Color("TagBackground").opacity(0.5))
                 .foregroundStyle(isSelected ? .black : .primary.opacity(0.8))
-                .cornerRadius(12)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .scaleEffect(isSelected ? 1.05 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
     }
 }
 
-// MARK: - HistoryRow
-struct HistoryRow: View {
+// MARK: HistoryRow
+struct RecipeRow: View {
     let title: String
     let duration: String
     let ingredients: Int
@@ -284,7 +247,7 @@ struct HistoryRow: View {
                 .font(.system(size: 30))
                 .frame(width: 60, height: 60)
                 .background(Color("HistoryItemHighlight"))
-                .cornerRadius(12)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
@@ -309,12 +272,26 @@ struct HistoryRow: View {
         }
         .padding(12)
         .background(Color("CardBackground"))
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(color: .black.opacity(0.02), radius: 5)
     }
 }
 
-// MARK: - Size
+// MARK: SafeIconView
+struct SafeIconView: View {
+    let systemName: String
+    var fallbackName: String = "fork.knife"
+    
+    var body: some View {
+        if UIImage(systemName: systemName) != nil {
+            Image(systemName: systemName)
+        } else {
+            Image(systemName: fallbackName)
+        }
+    }
+}
+
+// MARK: Size
 extension CGFloat {
     static let cornerRadius: CGFloat = 16
     static let buttonHeight: CGFloat = 56

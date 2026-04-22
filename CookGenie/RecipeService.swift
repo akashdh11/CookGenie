@@ -2,7 +2,7 @@
 //  RecipeService.swift
 //  CookGenie
 //
-//  Created by Akash Hiremath on 4/13/26.
+//  Created by Akash Hiremath on 3/26/26.
 //
 
 import Foundation
@@ -17,7 +17,7 @@ final class RecipeService {
     var isGenerating = false
     var error: String?
 
-    func generateRecipe(ingredients: [String], preferences: UserPreferences?) async throws -> Recipe {
+    func generateRecipe(ingredients: [String], preferences: RecipePreferences?) async throws -> Recipe {
         isGenerating = true
         error = nil
         defer { isGenerating = false }
@@ -26,7 +26,6 @@ final class RecipeService {
             throw RecipeError.notAuthenticated
         }
 
-        // Build preferences dict — only include non-nil values
         var prefDict: [String: Any] = [:]
         if let time = preferences?.selectedTime { prefDict["time"] = time }
         if let diet = preferences?.selectedDiet { prefDict["diet"] = diet }
@@ -39,7 +38,6 @@ final class RecipeService {
             "preferences": prefDict
         ]
 
-        // Call the Cloud Function
         let result = try await functions.httpsCallable("generateRecipe").call(payload)
 
         guard let data = result.data as? [String: Any],

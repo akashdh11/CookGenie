@@ -2,7 +2,7 @@
 //  FavoritesView.swift
 //  CookGenie
 //
-//  Created by Akash Hiremath on 4/13/26.
+//  Created by Akash Hiremath on 3/25/26.
 //
 
 import SwiftUI
@@ -32,7 +32,7 @@ struct FavoritesView: View {
                         VStack(spacing: 12) {
                             ForEach(firestoreService.favoriteRecipes) { recipe in
                                 NavigationLink(value: recipe) {
-                                    HistoryRow(
+                                    RecipeRow(
                                         title: recipe.title,
                                         duration: recipe.cookingTime,
                                         ingredients: recipe.ingredients.count,
@@ -53,7 +53,7 @@ struct FavoritesView: View {
             .navigationDestination(for: Recipe.self) { recipe in
                 RecipeDetailView(recipe: recipe)
             }
-            .onAppear {
+            .task {
                 if let uid = authViewModel.currentUser?.uid {
                     firestoreService.startFavoritesListener(uid: uid)
                 }

@@ -2,17 +2,15 @@
 //  AccountView.swift
 //  CookGenie
 //
-//  Created by Akash Hiremath on 4/13/26.
+//  Created by Akash Hiremath on 3/25/26.
 //
 
-// MARK: View and data structure of how a user's profile is displayed
 import SwiftUI
 import FirebaseAuth
-import SwiftData
+import FirebaseAuth
 
 
 struct AccountView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(AuthViewModel.self) private var viewModel
     @Environment(FirestoreService.self) private var firestoreService
 
@@ -41,18 +39,35 @@ struct AccountView: View {
                 }
                 
                 Section(header: Text("Usage")) {
-                    StatCard(
-                        icon: "fork.knife",
-                        title: "Recipes Generated",
-                        subtitle: "All time",
-                        value: "\(generationCount)"
-                    )
-                    .padding(.vertical, 4)
+                    HStack(spacing: 16) {
+                        Image(systemName: "fork.knife")
+                            .font(.system(size: 24))
+                            .foregroundStyle(.accent)
+                            .frame(width: 44, height: 44)
+                            .background(Color("HistoryItemHighlight"))
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Recipes Generated")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            Text("All time")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Text("\(generationCount)")
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                    }
+                    .padding(.vertical, 8)
                 }
                 
                 Section {
                     Button(role: .destructive) {
-                        viewModel.signOut(modelContext: modelContext, firestoreService: firestoreService)
+                        viewModel.signOut(firestoreService: firestoreService)
                     } label: {
                         HStack {
                             Text("Sign Out")
@@ -65,49 +80,12 @@ struct AccountView: View {
             .scrollContentBackground(.hidden)
             .background(Color("HomeBackground").ignoresSafeArea())
             .navigationTitle("Account")
-            .onAppear {
+            .task {
                 if let uid = viewModel.currentUser?.uid {
                     firestoreService.startHistoryListener(uid: uid)
                 }
             }
         }
-    }
-}
-
-private struct StatCard: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    let value: String
-
-    var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.system(size: 24))
-                .foregroundStyle(.accent)
-                .frame(width: 44, height: 44)
-                .background(Color("HistoryItemHighlight"))
-                .cornerRadius(10)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            Text(value)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .monospacedDigit()
-        }
-        .padding(16)
-        .background(Color("CardBackground"))
-        .cornerRadius(16)
-        .shadow(color: .black.opacity(0.02), radius: 5)
     }
 }
 

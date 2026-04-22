@@ -2,21 +2,17 @@
 //  Recipe.swift
 //  CookGenie
 //
-//  Created by Akash Hiremath on 4/13/26.
+//  Created by Akash Hiremath on 3/25/26.
 //
 
 import Foundation
 
-// Plain Codable struct — Firestore is the source of truth.
-// No SwiftData @Model needed.
-
-// MARK: data structures to store a Recipe and Ingredient info.
 struct RecipeIngredient: Codable, Hashable {
     var name: String
     var quantity: String
     var iconName: String
 
-    init(name: String, quantity: String, iconName: String = "circle.fill") {
+    init(name: String, quantity: String, iconName: String = "fork.knife") {
         self.name = name
         self.quantity = quantity
         self.iconName = iconName
@@ -64,8 +60,7 @@ struct Recipe: Codable, Identifiable, Hashable {
         self.createdAt = createdAt
     }
 
-    // MARK: - Firestore deserialization
-    // Firestore stores Timestamps; we decode them as Dates via the helper below.
+    // MARK: Firestore deserialization
     init?(firestoreData data: [String: Any]) {
         guard let id = data["id"] as? String,
               let title = data["title"] as? String else { return nil }
@@ -73,13 +68,12 @@ struct Recipe: Codable, Identifiable, Hashable {
         self.id = id
         self.title = title
         self.description = data["description"] as? String ?? ""
-        self.cookingTime = data["cookingTime"] as? String ?? "20 Min"
-        self.difficulty = data["difficulty"] as? String ?? "Easy"
+        self.cookingTime = data["cookingTime"] as? String ?? ""
+        self.difficulty = data["difficulty"] as? String ?? ""
         self.serves = data["serves"] as? Int ?? 2
         self.isFavorite = data["isFavorite"] as? Bool ?? false
         self.instructions = data["instructions"] as? [String] ?? []
 
-        // Decode Firestore Timestamp → Date
         if let ts = data["createdAt"] as? [String: Any],
            let seconds = ts["_seconds"] as? TimeInterval {
             self.createdAt = Date(timeIntervalSince1970: seconds)
@@ -87,15 +81,15 @@ struct Recipe: Codable, Identifiable, Hashable {
             self.createdAt = Date()
         }
 
-        // Decode ingredients array
         if let rawIngredients = data["ingredients"] as? [[String: Any]] {
             self.ingredients = rawIngredients.compactMap { dict in
                 guard let name = dict["name"] as? String,
                       let quantity = dict["quantity"] as? String else { return nil }
+                let iconName = dict["iconName"] as? String
                 return RecipeIngredient(
                     name: name,
                     quantity: quantity,
-                    iconName: dict["iconName"] as? String ?? "circle.fill"
+                    iconName: (iconName == nil || iconName!.isEmpty) ? "fork.knife" : iconName!
                 )
             }
         } else {
@@ -103,7 +97,7 @@ struct Recipe: Codable, Identifiable, Hashable {
         }
     }
 
-    // MARK: - Firestore serialization
+    // MARK: Firestore serialization
     func toFirestoreData() -> [String: Any] {
         [
             "id": id,

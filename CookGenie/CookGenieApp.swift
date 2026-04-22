@@ -7,17 +7,18 @@
 
 import SwiftUI
 import FirebaseCore
-import SwiftData
 
 @main
 struct CookGenieApp: App {
     @State private var authViewModel: AuthViewModel
     @State private var firestoreService: FirestoreService
+    @State private var recipeService: RecipeService
 
     init() {
         FirebaseApp.configure()
         self._authViewModel = State(wrappedValue: AuthViewModel())
         self._firestoreService = State(wrappedValue: FirestoreService())
+        self._recipeService = State(wrappedValue: RecipeService())
     }
 
     var body: some Scene {
@@ -25,7 +26,7 @@ struct CookGenieApp: App {
             ContentView()
                 .environment(authViewModel)
                 .environment(firestoreService)
-                .modelContainer(for: UserPreferences.self)
+                .environment(recipeService)
         }
     }
 }

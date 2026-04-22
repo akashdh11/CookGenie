@@ -8,8 +8,6 @@
 
 import SwiftUI
 
-//MARK: Main Login/Registration Page
-
 struct LoginView: View {
     @Environment(AuthViewModel.self) private var viewModel
     @State private var email = ""
