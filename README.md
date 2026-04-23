@@ -1,6 +1,6 @@
 # CookGenie
 
-An AI-powered iOS application that generates recipes based on available ingredients using SwiftUI and Google Gemini AI.
+An AI-powered iOS application that generates recipes based on available ingredients using SwiftUI and Google Gemini API.
 
 ## How to Run
 1. Open **`CookGenie.xcodeproj`** in Xcode.
